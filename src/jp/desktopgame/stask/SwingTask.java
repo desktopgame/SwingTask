@@ -44,6 +44,19 @@ public class SwingTask {
         return SwingTask.create((Publishable<Void> v, CancellationToken tok) -> callable.call()).process(SwingTask::emptyProc);
     }
 
+    /**
+     * 非同期で実行されるタスクを生成します.
+     *
+     * @param runnable
+     * @return
+     */
+    public static CancellationWorkItem<Void, Void> create(ThrowingRunnable runnable) {
+        return SwingTask.create(() -> {
+            runnable.run();
+            return (Void) null;
+        });
+    }
+
     private static void emptyProc(List<Void> chunks) {
     }
 }

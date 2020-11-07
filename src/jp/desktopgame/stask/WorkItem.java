@@ -10,6 +10,7 @@ package jp.desktopgame.stask;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
@@ -27,7 +28,7 @@ public class WorkItem<T, V> {
     private Executor executor;
     private Reporter<T, V> doInBackground;
     private Updatable<V> updatable;
-    Consumer<T> done;
+    CatchConsumer<T> done;
     CancellationTokenSource<T, V> tokenSource;
     private boolean invalid;
 
@@ -60,9 +61,26 @@ public class WorkItem<T, V> {
      * 非同期処理が終了した後に呼ばれるコールバックを設定してタスクを開始します.
      *
      * @param done
+     * @param error
      * @return
      */
-    public CancellationTokenSource<T, V> done(Consumer<T> done) {
+    public CancellationTokenSource<T, V> done(Consumer<T> done, Consumer<ExecutionException> error) {
+        return done((optParam, optEx) -> {
+            if (optParam.isPresent()) {
+                done.accept(optParam.get());
+            } else if (optEx.isPresent()) {
+                error.accept(optEx.get());
+            }
+        });
+    }
+
+    /**
+     * 非同期処理が終了した後に呼ばれるコールバックを設定してタスクを開始します.
+     *
+     * @param done
+     * @return
+     */
+    public CancellationTokenSource<T, V> done(CatchConsumer<T> done) {
         if (invalid) {
             throw new IllegalStateException();
         }
@@ -113,9 +131,11 @@ public class WorkItem<T, V> {
             super.done(); //To change body of generated methods, choose Tools | Templates.
             if (done != null) {
                 try {
-                    done.accept(get());
-                } catch (InterruptedException | ExecutionException ex) {
+                    done.consume(Optional.ofNullable(get()), Optional.empty());
+                } catch (InterruptedException ex) {
                     throw new IllegalStateException(ex);
+                } catch (ExecutionException ex) {
+                    done.consume(Optional.empty(), Optional.of(ex));
                 }
             }
         }

@@ -9,6 +9,7 @@
 package jp.desktopgame.stask;
 
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
@@ -31,9 +32,26 @@ public class CancellationWorkItem<T, V> {
      * 非同期処理が終了した後に呼ばれるコールバックを設定してタスクを開始します.
      *
      * @param done
+     * @param error
      * @return
      */
-    public CancellationTokenSource<T, V> done(Consumer<T> done) {
+    public CancellationTokenSource<T, V> done(Consumer<T> done, Consumer<ExecutionException> error) {
+        return done((optParam, optEx) -> {
+            if (optParam.isPresent()) {
+                done.accept(optParam.get());
+            } else if (optEx.isPresent()) {
+                error.accept(optEx.get());
+            }
+        });
+    }
+
+    /**
+     * 非同期処理が終了した後に呼ばれるコールバックを設定してタスクを開始します.
+     *
+     * @param done
+     * @return
+     */
+    public CancellationTokenSource<T, V> done(CatchConsumer<T> done) {
         if (invalid) {
             throw new IllegalStateException();
         }

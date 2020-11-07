@@ -80,6 +80,10 @@ public class WorkItem<T, V> {
         if (invalid) {
             throw new IllegalStateException();
         }
+        return _forget();
+    }
+
+    Future<T> _forget() {
         execute();
         return executor;
     }

@@ -53,6 +53,6 @@ public class CancellationWorkItem<T, V> {
             throw new IllegalStateException();
         }
         this.invalid = true;
-        return parent.forget();
+        return parent._forget();
     }
 }

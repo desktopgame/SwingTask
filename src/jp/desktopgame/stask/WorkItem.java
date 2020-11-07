@@ -61,6 +61,18 @@ public class WorkItem<T, V> {
      * 非同期処理が終了した後に呼ばれるコールバックを設定してタスクを開始します.
      *
      * @param done
+     * @return
+     */
+    public CancellationTokenSource<T, V> done(Consumer<T> done) {
+        return done(done, (ex) -> {
+            throw new RuntimeException(ex);
+        });
+    }
+
+    /**
+     * 非同期処理が終了した後に呼ばれるコールバックを設定してタスクを開始します.
+     *
+     * @param done
      * @param error
      * @return
      */
